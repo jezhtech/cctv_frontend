@@ -8,7 +8,9 @@ export interface StreamMetrics {
 
 export class StreamingService {
   // Start a camera stream
-  async startStream(cameraId: string): Promise<{ success: boolean; message: string; camera_id: string }> {
+  async startStream(
+    cameraId: string
+  ): Promise<{ success: boolean; message: string; camera_id: string }> {
     try {
       return await cameraApi.startCameraStream(cameraId);
     } catch (error) {
@@ -18,21 +20,24 @@ export class StreamingService {
   }
 
   // Stop a camera stream
-  async stopStream(cameraId: string): Promise<{ success: boolean; message: string; camera_id: string }> {
+  async stopStream(
+    cameraId: string
+  ): Promise<{ success: boolean; message: string; camera_id: string }> {
     try {
       return await cameraApi.stopCameraStream(cameraId);
     } catch (error) {
-      console.error(`Failed to stop stream for camera ${cameraId}:`, error);
+      // console.error(`Failed to stop stream for camera ${cameraId}:`, error);
       throw error;
     }
   }
 
   // Get stream status for a specific camera
-  async getStreamStatus(cameraId: string): Promise<StreamStatus | { message: string }> {
+  async getStreamStatus(
+    cameraId: string
+  ): Promise<StreamStatus | { message: string }> {
     try {
       return await cameraApi.getCameraStreamStatus(cameraId);
     } catch (error) {
-      console.error(`Failed to get stream status for camera ${cameraId}:`, error);
       throw error;
     }
   }
@@ -50,17 +55,22 @@ export class StreamingService {
   // Stop all active streams
   async stopAllStreams(): Promise<{ success: boolean; message: string }> {
     try {
-      const response = await fetch(`${import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000'}/api/v1/streams/stop-all`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      });
-      
+      const response = await fetch(
+        `${
+          import.meta.env.VITE_API_BASE_URL || "http://localhost:8000"
+        }/api/v1/streams/stop-all`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+        }
+      );
+
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
-      
+
       return await response.json();
     } catch (error) {
       console.error("Failed to stop all streams:", error);
@@ -70,21 +80,33 @@ export class StreamingService {
 
   // Get MJPEG stream URL for a camera
   getMJPEGStreamUrl(cameraId: string): string {
-    return `${import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000'}/api/v1/streams/${cameraId}/mjpeg`;
+    return `${
+      import.meta.env.VITE_API_BASE_URL || "http://localhost:8000"
+    }/api/v1/streams/${cameraId}/mjpeg`;
   }
 
   // Get latest frame URL for a camera
   getLatestFrameUrl(cameraId: string): string {
-    return `${import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000'}/api/v1/streams/${cameraId}/latest-frame`;
+    return `${
+      import.meta.env.VITE_API_BASE_URL || "http://localhost:8000"
+    }/api/v1/streams/${cameraId}/latest-frame`;
   }
 
   // Check if a stream is active
   async isStreamActive(cameraId: string): Promise<boolean> {
     try {
       const status = await this.getStreamStatus(cameraId);
-      return status && typeof status === "object" && "is_running" in status && status.is_running;
+      return (
+        status &&
+        typeof status === "object" &&
+        "is_running" in status &&
+        status.is_running
+      );
     } catch (error) {
-      console.error(`Failed to check streaming status for camera ${cameraId}:`, error);
+      console.error(
+        `Failed to check streaming status for camera ${cameraId}:`,
+        error
+      );
       return false;
     }
   }
@@ -95,7 +117,7 @@ export class StreamingService {
     frame_count: number;
     uptime_seconds: number;
     errors_count: number;
-    performance_metrics?: StreamStatus['performance_metrics'];
+    performance_metrics?: StreamStatus["performance_metrics"];
   } | null> {
     try {
       const status = await this.getStreamStatus(cameraId);
@@ -110,7 +132,10 @@ export class StreamingService {
       }
       return null;
     } catch (error) {
-      console.error(`Failed to get performance metrics for camera ${cameraId}:`, error);
+      console.error(
+        `Failed to get performance metrics for camera ${cameraId}:`,
+        error
+      );
       return null;
     }
   }

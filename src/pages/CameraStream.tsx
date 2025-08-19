@@ -56,8 +56,10 @@ export function CameraStream() {
         setStreamStatus(status);
         setIsStreamActive(status.is_running);
       }
-    } catch (err) {
-      console.error("Failed to load stream status:", err);
+    } catch (err: any) {
+      if (isStreamActive && "Stream not found" === err.message) {
+        setIsStreamActive(false);
+      }
     }
   };
 
@@ -65,8 +67,6 @@ export function CameraStream() {
     try {
       setStreamLoading(true);
       await streamingService.startStream(cameraId!);
-      // Wait a bit for the stream to start
-      setTimeout(loadStreamStatus, 2000);
     } catch (err) {
       console.error("Failed to start stream:", err);
       setError("Failed to start camera stream");
