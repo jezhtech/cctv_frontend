@@ -44,10 +44,13 @@ export function ViewUserModal({ user, isOpen, onClose }: ViewUserModalProps) {
             <div className="w-20 h-20 bg-primary/10 rounded-full flex items-center justify-center overflow-hidden">
               {user.profile_images && user.profile_images.length > 0 ? (
                 <img
-                  src={
+                  src={getImageUrl(
                     user.profile_images.find((img) => img.is_primary)
-                      ?.filename || user.profile_images[0].filename
-                  }
+                      ?.filename || user.profile_images[0].filename,
+                    user.profile_images
+                      .find((img) => img.is_primary)
+                      ?.content_type?.split("/")[1] || "jpeg"
+                  )}
                   alt={`${user.first_name} ${user.last_name}`}
                   className="w-full h-full object-cover"
                 />

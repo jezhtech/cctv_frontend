@@ -1,5 +1,5 @@
 import { useState, useRef } from "react";
-import { X, User, Upload, Trash2, Save, Loader2, Image as ImageIcon } from "lucide-react";
+import { X, User, Upload, Trash2, Save, Loader2 } from "lucide-react";
 import { userService } from "@/services";
 import type { UserCreate } from "@/lib/api/user";
 import { cn } from "@/lib/utils";
@@ -16,7 +16,11 @@ interface ImageFile {
   id: string;
 }
 
-export function AddUserModal({ isOpen, onClose, onUserAdded }: AddUserModalProps) {
+export function AddUserModal({
+  isOpen,
+  onClose,
+  onUserAdded,
+}: AddUserModalProps) {
   const [formData, setFormData] = useState<UserCreate>({
     first_name: "",
     last_name: "",
@@ -33,10 +37,10 @@ export function AddUserModal({ isOpen, onClose, onUserAdded }: AddUserModalProps
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleInputChange = (field: keyof UserCreate, value: any) => {
-    setFormData(prev => ({ ...prev, [field]: value }));
+    setFormData((prev) => ({ ...prev, [field]: value }));
     // Clear error when user starts typing
     if (errors[field]) {
-      setErrors(prev => ({ ...prev, [field]: "" }));
+      setErrors((prev) => ({ ...prev, [field]: "" }));
     }
   };
 
@@ -45,18 +49,18 @@ export function AddUserModal({ isOpen, onClose, onUserAdded }: AddUserModalProps
     if (!files) return;
 
     const newImages: ImageFile[] = [];
-    
+
     for (let i = 0; i < files.length; i++) {
       const file = files[i];
-      
+
       // Check if we already have 5 images
       if (images.length + newImages.length >= 5) break;
-      
+
       // Validate file type
-      if (!file.type.startsWith('image/')) {
+      if (!file.type.startsWith("image/")) {
         continue;
       }
-      
+
       // Validate file size (5MB max)
       if (file.size > 5 * 1024 * 1024) {
         continue;
@@ -68,17 +72,17 @@ export function AddUserModal({ isOpen, onClose, onUserAdded }: AddUserModalProps
         const imageFile: ImageFile = {
           file,
           preview,
-          id: Math.random().toString(36).substr(2, 9)
+          id: Math.random().toString(36).substr(2, 9),
         };
-        
-        setImages(prev => [...prev, imageFile]);
+
+        setImages((prev) => [...prev, imageFile]);
       };
       reader.readAsDataURL(file);
     }
   };
 
   const removeImage = (imageId: string) => {
-    setImages(prev => prev.filter(img => img.id !== imageId));
+    setImages((prev) => prev.filter((img) => img.id !== imageId));
   };
 
   const validateForm = (): boolean => {
@@ -104,7 +108,10 @@ export function AddUserModal({ isOpen, onClose, onUserAdded }: AddUserModalProps
       newErrors.password = "Password must be at least 6 characters";
     }
 
-    if (formData.phone && !/^[\+]?[1-9][\d]{0,15}$/.test(formData.phone.replace(/\s/g, ''))) {
+    if (
+      formData.phone &&
+      !/^[\+]?[1-9][\d]{0,15}$/.test(formData.phone.replace(/\s/g, ""))
+    ) {
       newErrors.phone = "Please enter a valid phone number";
     }
 
@@ -114,58 +121,72 @@ export function AddUserModal({ isOpen, onClose, onUserAdded }: AddUserModalProps
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!validateForm()) return;
 
     try {
       setLoading(true);
       setErrors({}); // Clear previous errors
-      
+
       // Generate image names upfront
       let profileImages = undefined;
       if (images.length > 0) {
+        const timestamp = Date.now();
+        const randomSuffix = Math.random().toString(36).substring(2, 8); // 6 random chars
+
         profileImages = images.map((img, index) => ({
-          id: `img_${Date.now()}_${index + 1}`,
-          filename: `img_${String(index + 1).padStart(3, '0')}`,
+          id: `img_${timestamp}_${index + 1}_${randomSuffix}`,
+          filename: `img_${String(index + 1).padStart(
+            3,
+            "0"
+          )}_${timestamp}_${randomSuffix}`,
           is_primary: index === 0, // First image is primary
           uploaded_at: new Date().toISOString(),
           size: 0, // Will be updated after upload
-          content_type: img.file.type // Will be updated after upload
+          content_type: img.file.type, // Will be updated after upload
         }));
       }
-      
+
       // Create user with pre-assigned image names
       const userDataWithImages = {
         ...formData,
-        profile_images: profileImages
+        profile_images: profileImages,
       };
-      
+
       const newUser = await userService.createUser(userDataWithImages);
-      
+
       // Upload images if any
       if (images.length > 0) {
         try {
-          console.log(`Uploading ${images.length} images for user ${newUser.id}`);
-          
+          console.log(
+            `Uploading ${images.length} images for user ${newUser.id}`
+          );
+
           // Upload each image with its pre-assigned name
           for (let i = 0; i < images.length; i++) {
             const imageName = profileImages![i].filename;
             console.log(`Uploading image ${i + 1} with name: ${imageName}`);
-            await userService.uploadProfileImage(newUser.id, images[i].file, imageName);
+            await userService.uploadProfileImage(
+              newUser.id,
+              images[i].file,
+              imageName
+            );
             console.log(`Successfully uploaded image ${i + 1}`);
           }
-          
+
           console.log(`Successfully uploaded ${images.length} images`);
         } catch (error: any) {
           console.error(`Failed to upload images: ${error}`);
           // Show image upload error but don't fail the entire operation
-          setErrors(prev => ({
+          setErrors((prev) => ({
             ...prev,
-            general: `User created but failed to upload images: ${error.message || 'Unknown error'}`
+            general: `User created but failed to upload images: ${
+              error.message || "Unknown error"
+            }`,
           }));
         }
       }
-      
+
       // Reset form
       setFormData({
         first_name: "",
@@ -179,36 +200,48 @@ export function AddUserModal({ isOpen, onClose, onUserAdded }: AddUserModalProps
       });
       setImages([]);
       setErrors({});
-      
+
       onUserAdded();
       onClose();
     } catch (error: any) {
       console.error("Failed to create user:", error);
-      
+
       // Handle different types of errors
       let errorMessage = "Failed to create user";
-      
+
       if (error.message) {
-        if (error.message.includes("email") || error.message.includes("Email")) {
+        if (
+          error.message.includes("email") ||
+          error.message.includes("Email")
+        ) {
           setErrors({ email: "This email is already registered" });
           return;
-        } else if (error.message.includes("employee_id") || error.message.includes("Employee ID")) {
+        } else if (
+          error.message.includes("employee_id") ||
+          error.message.includes("Employee ID")
+        ) {
           setErrors({ employee_id: "This employee ID is already taken" });
           return;
         } else if (error.message.includes("password")) {
           setErrors({ password: error.message });
           return;
-        } else if (error.message.includes("first_name") || error.message.includes("First name")) {
+        } else if (
+          error.message.includes("first_name") ||
+          error.message.includes("First name")
+        ) {
           setErrors({ first_name: error.message });
           return;
-        } else if (error.message.includes("last_name") || error.message.includes("Last name")) {
+        } else if (
+          error.message.includes("last_name") ||
+          error.message.includes("Last name")
+        ) {
           setErrors({ last_name: error.message });
           return;
         } else {
           errorMessage = error.message;
         }
       }
-      
+
       setErrors({ general: errorMessage });
     } finally {
       setLoading(false);
@@ -255,7 +288,9 @@ export function AddUserModal({ isOpen, onClose, onUserAdded }: AddUserModalProps
               <input
                 type="text"
                 value={formData.first_name}
-                onChange={(e) => handleInputChange("first_name", e.target.value)}
+                onChange={(e) =>
+                  handleInputChange("first_name", e.target.value)
+                }
                 className={cn(
                   "w-full px-3 py-2 border rounded-md bg-background focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent",
                   errors.first_name ? "border-red-500" : "border-border"
@@ -292,9 +327,7 @@ export function AddUserModal({ isOpen, onClose, onUserAdded }: AddUserModalProps
           {/* Contact Information */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium mb-2">
-                Email *
-              </label>
+              <label className="block text-sm font-medium mb-2">Email *</label>
               <input
                 type="email"
                 value={formData.email}
@@ -341,7 +374,9 @@ export function AddUserModal({ isOpen, onClose, onUserAdded }: AddUserModalProps
               <input
                 type="text"
                 value={formData.employee_id}
-                onChange={(e) => handleInputChange("employee_id", e.target.value)}
+                onChange={(e) =>
+                  handleInputChange("employee_id", e.target.value)
+                }
                 className={cn(
                   "w-full px-3 py-2 border rounded-md bg-background focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent",
                   errors.employee_id ? "border-red-500" : "border-border"
@@ -350,7 +385,9 @@ export function AddUserModal({ isOpen, onClose, onUserAdded }: AddUserModalProps
                 disabled={loading}
               />
               {errors.employee_id && (
-                <p className="text-sm text-red-500 mt-1">{errors.employee_id}</p>
+                <p className="text-sm text-red-500 mt-1">
+                  {errors.employee_id}
+                </p>
               )}
             </div>
 
@@ -361,7 +398,9 @@ export function AddUserModal({ isOpen, onClose, onUserAdded }: AddUserModalProps
               <input
                 type="text"
                 value={formData.department}
-                onChange={(e) => handleInputChange("department", e.target.value)}
+                onChange={(e) =>
+                  handleInputChange("department", e.target.value)
+                }
                 className="w-full px-3 py-2 border rounded-md bg-background focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent border-border"
                 placeholder="Enter department"
                 disabled={loading}
@@ -370,9 +409,7 @@ export function AddUserModal({ isOpen, onClose, onUserAdded }: AddUserModalProps
           </div>
 
           <div>
-            <label className="block text-sm font-medium mb-2">
-              Position
-            </label>
+            <label className="block text-sm font-medium mb-2">Position</label>
             <input
               type="text"
               value={formData.position}
@@ -385,9 +422,7 @@ export function AddUserModal({ isOpen, onClose, onUserAdded }: AddUserModalProps
 
           {/* Password */}
           <div>
-            <label className="block text-sm font-medium mb-2">
-              Password *
-            </label>
+            <label className="block text-sm font-medium mb-2">Password *</label>
             <input
               type="password"
               value={formData.password}
