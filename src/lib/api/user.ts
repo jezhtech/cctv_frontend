@@ -1,6 +1,15 @@
 import { ApiClient } from "./client";
 
 // Types
+export interface ProfileImageResponse {
+  id: string;
+  url: string;
+  is_primary: boolean;
+  uploaded_at: string;
+  size?: number;
+  content_type?: string;
+}
+
 export interface User {
   id: string;
   first_name: string;
@@ -11,6 +20,14 @@ export interface User {
   employee_id?: string;
   position?: string;
   avatar_url?: string;
+  profile_images?: Array<{
+    id: string;
+    filename: string;
+    is_primary: boolean;
+    uploaded_at: string;
+    size?: number;
+    content_type?: string;
+  }>;
   is_active: boolean;
   is_verified: boolean;
   created_at: string;
@@ -26,6 +43,14 @@ export interface UserCreate {
   employee_id?: string;
   position?: string;
   password: string;
+  profile_images?: Array<{
+    id: string;
+    filename: string;
+    is_primary: boolean;
+    uploaded_at: string;
+    size?: number;
+    content_type?: string;
+  }>;
 }
 
 export interface UserUpdate {
@@ -151,6 +176,50 @@ export class UserApi extends ApiClient {
   // Reset user password
   async resetUserPassword(id: string): Promise<{ message: string }> {
     return this.post<{ message: string }>(`/users/${id}/reset-password`);
+  }
+
+  // Upload profile image
+  async uploadProfileImage(
+    userId: string,
+    imageFile: File,
+    imageName: string
+  ): Promise<ProfileImageResponse> {
+    const formData = new FormData();
+    formData.append("file", imageFile);
+    formData.append("image_name", imageName);
+    
+    return this.request({
+      method: "POST",
+      url: `/users/${userId}/profile-images`,
+      data: formData,
+      headers: {
+        "Content-Type": "multipart/form-data",
+      },
+    });
+  }
+
+
+
+  // Get user profile images
+  async getUserProfileImages(userId: string): Promise<{
+    images: ProfileImageResponse[];
+    total: number;
+    primary_image?: ProfileImageResponse;
+  }> {
+    return this.get(`/users/${userId}/profile-images`);
+  }
+
+  // Delete profile image
+  async deleteProfileImage(userId: string, imageId: string): Promise<void> {
+    return this.delete(`/users/${userId}/profile-images/${imageId}`);
+  }
+
+  // Set primary profile image
+  async setPrimaryProfileImage(
+    userId: string,
+    imageId: string
+  ): Promise<ProfileImageResponse> {
+    return this.put(`/users/${userId}/profile-images/${imageId}/primary`);
   }
 }
 

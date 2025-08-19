@@ -58,9 +58,29 @@ export class ApiClient {
       const response = await this.client.request(config);
       return response.data;
     } catch (error: any) {
-      throw new Error(
-        error.response?.data?.detail || error.message || "An error occurred"
-      );
+      // Extract error message from different possible sources
+      let errorMessage = "An error occurred";
+      
+      if (error.response?.data) {
+        if (error.response.data.detail) {
+          errorMessage = error.response.data.detail;
+        } else if (error.response.data.message) {
+          errorMessage = error.response.data.message;
+        } else if (typeof error.response.data === 'string') {
+          errorMessage = error.response.data;
+        } else if (error.response.data.error) {
+          errorMessage = error.response.data.error;
+        }
+      } else if (error.message) {
+        errorMessage = error.message;
+      }
+      
+      // Create a more informative error
+      const enhancedError = new Error(errorMessage);
+      (enhancedError as any).status = error.response?.status;
+      (enhancedError as any).response = error.response;
+      
+      throw enhancedError;
     }
   }
 

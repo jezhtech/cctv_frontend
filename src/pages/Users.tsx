@@ -8,16 +8,22 @@ import {
   Eye,
   UserCheck,
   UserX,
+  ImageIcon,
 } from "lucide-react";
 import { userService } from "@/services";
-import { cn } from "@/lib/utils";
+import { cn, getImageUrl } from "@/lib/utils";
 import type { User } from "@/lib/api/user";
+import { AddUserModal, ViewUserModal, EditUserModal } from "@/components";
 
 export function Users() {
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [filterActive, setFilterActive] = useState<boolean | null>(null);
+  const [showAddUserModal, setShowAddUserModal] = useState(false);
+  const [showViewUserModal, setShowViewUserModal] = useState(false);
+  const [showEditUserModal, setShowEditUserModal] = useState(false);
+  const [selectedUser, setSelectedUser] = useState<User | null>(null);
 
   useEffect(() => {
     fetchUsers();
@@ -44,6 +50,31 @@ export function Users() {
         console.error("Failed to delete user:", error);
       }
     }
+  };
+
+  const handleUserAdded = () => {
+    fetchUsers();
+  };
+
+  const handleUserUpdated = () => {
+    fetchUsers();
+  };
+
+  const handleViewUser = (user: User) => {
+    setSelectedUser(user);
+    setShowViewUserModal(true);
+  };
+
+  const handleEditUser = (user: User) => {
+    setSelectedUser(user);
+    setShowEditUserModal(true);
+  };
+
+  const closeModals = () => {
+    setShowAddUserModal(false);
+    setShowViewUserModal(false);
+    setShowEditUserModal(false);
+    setSelectedUser(null);
   };
 
   const filteredUsers = users.filter((user) => {
@@ -77,7 +108,10 @@ export function Users() {
             Manage system users and their permissions
           </p>
         </div>
-        <button className="inline-flex items-center px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90 transition-colors">
+        <button
+          onClick={() => setShowAddUserModal(true)}
+          className="inline-flex items-center px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90 transition-colors"
+        >
           <Plus className="h-4 w-4 mr-2" />
           Add User
         </button>
@@ -164,11 +198,37 @@ export function Users() {
                 >
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="flex items-center">
-                      <div className="w-10 h-10 bg-primary/10 rounded-full flex items-center justify-center">
-                        <span className="text-sm font-medium text-primary">
-                          {user.first_name[0]}
-                          {user.last_name[0]}
-                        </span>
+                      <div className="w-10 h-10 bg-primary/10 rounded-full flex items-center justify-center overflow-hidden">
+                        {user.profile_images &&
+                        user.profile_images.length > 0 ? (
+                          <img
+                            src={getImageUrl(
+                              user.profile_images.find((img) => img.is_primary)
+                                ?.filename || user.profile_images[0].filename
+                            , user.profile_images.find((img) => img.is_primary)
+                                ?.content_type?.split("/")[1] || "jpeg")}
+                            alt={`${user.first_name} ${user.last_name}`}
+                            className="w-full h-full object-cover"
+                            onError={(e) => {
+                              // Fallback to initials if image fails to load
+                              const target = e.target as HTMLImageElement;
+                              target.style.display = "none";
+                              const parent = target.parentElement;
+                              if (parent) {
+                                const fallback = document.createElement("span");
+                                fallback.className =
+                                  "text-sm font-medium text-primary";
+                                fallback.textContent = `${user.first_name[0]}${user.last_name[0]}`;
+                                parent.appendChild(fallback);
+                              }
+                            }}
+                          />
+                        ) : (
+                          <span className="text-sm font-medium text-primary">
+                            {user.first_name[0]}
+                            {user.last_name[0]}
+                          </span>
+                        )}
                       </div>
                       <div className="ml-4">
                         <div className="text-sm font-medium">
@@ -177,6 +237,14 @@ export function Users() {
                         <div className="text-sm text-muted-foreground">
                           ID: {user.employee_id || "N/A"}
                         </div>
+                        {user.profile_images &&
+                          user.profile_images.length > 0 && (
+                            <div className="text-xs text-muted-foreground flex items-center mt-1">
+                              <ImageIcon className="h-3 w-3 mr-1" />
+                              {user.profile_images.length} image
+                              {user.profile_images.length !== 1 ? "s" : ""}
+                            </div>
+                          )}
                       </div>
                     </div>
                   </td>
@@ -217,15 +285,24 @@ export function Users() {
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                     <div className="flex items-center space-x-2">
-                      <button className="p-2 text-muted-foreground hover:text-foreground hover:bg-accent rounded-md transition-colors">
+                      <button
+                        onClick={() => handleViewUser(user)}
+                        className="p-2 text-muted-foreground hover:text-foreground hover:bg-accent rounded-md transition-colors"
+                        title="View user details"
+                      >
                         <Eye className="h-4 w-4" />
                       </button>
-                      <button className="p-2 text-muted-foreground hover:text-foreground hover:bg-accent rounded-md transition-colors">
+                      <button
+                        onClick={() => handleEditUser(user)}
+                        className="p-2 text-muted-foreground hover:text-foreground hover:bg-accent rounded-md transition-colors"
+                        title="Edit user"
+                      >
                         <Edit className="h-4 w-4" />
                       </button>
                       <button
                         onClick={() => handleDeleteUser(user.id)}
                         className="p-2 text-red-500 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-md transition-colors"
+                        title="Delete user"
                       >
                         <Trash2 className="h-4 w-4" />
                       </button>
@@ -253,7 +330,10 @@ export function Users() {
               : "Get started by adding your first user to the system."}
           </p>
           {!searchTerm && filterActive === null && (
-            <button className="inline-flex items-center px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90 transition-colors">
+            <button
+              onClick={() => setShowAddUserModal(true)}
+              className="inline-flex items-center px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90 transition-colors"
+            >
               <Plus className="h-4 w-4 mr-2" />
               Add User
             </button>
@@ -267,6 +347,23 @@ export function Users() {
           Showing {filteredUsers.length} of {users.length} users
         </div>
       )}
+
+      <AddUserModal
+        isOpen={showAddUserModal}
+        onClose={closeModals}
+        onUserAdded={handleUserAdded}
+      />
+      <ViewUserModal
+        isOpen={showViewUserModal}
+        onClose={closeModals}
+        user={selectedUser}
+      />
+      <EditUserModal
+        isOpen={showEditUserModal}
+        onClose={closeModals}
+        user={selectedUser}
+        onUserUpdated={handleUserUpdated}
+      />
     </div>
   );
 }

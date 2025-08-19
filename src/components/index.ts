@@ -5,3 +5,6 @@ export { MainLayout } from "./layout/MainLayout";
 export { AddCameraModal } from "./camera/AddCameraModal";
 export { EditCameraModal } from "./camera/EditCameraModal";
 export { CameraCard } from "./camera/CameraCard";
+
+// User components
+export { AddUserModal, ViewUserModal, EditUserModal } from "./user";

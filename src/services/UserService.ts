@@ -3,6 +3,7 @@ import {
   type User,
   type UserCreate,
   type UserUpdate,
+  type ProfileImageResponse,
 } from "@/lib/api/user";
 
 export interface UserFilters {
@@ -255,6 +256,62 @@ export class UserService {
       return result.avatar_url;
     } catch (error) {
       console.error(`Failed to update avatar for user ${id}:`, error);
+      throw error;
+    }
+  }
+
+  // Upload profile image
+  async uploadProfileImage(
+    userId: string,
+    imageFile: File,
+    imageName: string
+  ): Promise<ProfileImageResponse> {
+    try {
+      // Validate file
+      this.validateAvatarFile(imageFile);
+
+      return await userApi.uploadProfileImage(userId, imageFile, imageName);
+    } catch (error) {
+      console.error(`Failed to upload profile image for user ${userId}:`, error);
+      throw error;
+    }
+  }
+
+
+
+  // Get user profile images
+  async getUserProfileImages(userId: string): Promise<{
+    images: ProfileImageResponse[];
+    total: number;
+    primary_image?: ProfileImageResponse;
+  }> {
+    try {
+      return await userApi.getUserProfileImages(userId);
+    } catch (error) {
+      console.error(`Failed to get profile images for user ${userId}:`, error);
+      throw error;
+    }
+  }
+
+  // Delete profile image
+  async deleteProfileImage(userId: string, imageId: string): Promise<void> {
+    try {
+      await userApi.deleteProfileImage(userId, imageId);
+    } catch (error) {
+      console.error(`Failed to delete profile image ${imageId} for user ${userId}:`, error);
+      throw error;
+    }
+  }
+
+  // Set primary profile image
+  async setPrimaryProfileImage(
+    userId: string,
+    imageId: string
+  ): Promise<ProfileImageResponse> {
+    try {
+      return await userApi.setPrimaryProfileImage(userId, imageId);
+    } catch (error) {
+      console.error(`Failed to set primary profile image ${imageId} for user ${userId}:`, error);
       throw error;
     }
   }

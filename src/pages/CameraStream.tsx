@@ -1,11 +1,10 @@
 import {
-  ArrowLeft,
   Play,
-  StopCircle,
-  RotateCcw,
   Wifi,
   WifiOff,
   Activity,
+  RotateCcw,
+  StopCircle,
 } from "lucide-react";
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
@@ -13,6 +12,8 @@ import { useParams, useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { cameraService, streamingService } from "@/services";
 import type { Camera, StreamStatus } from "@/lib/api/camera";
+import { Button } from "@/components/ui/button";
+import { GoBack } from "@/components/go-back";
 
 export function CameraStream() {
   const { cameraId } = useParams<{ cameraId: string }>();
@@ -122,37 +123,21 @@ export function CameraStream() {
   }
 
   return (
-    <div className="container mx-auto p-6 space-y-6">
+    <div className="space-y-4">
       {/* Header */}
       <div className="flex items-center justify-between">
-        <div className="flex items-center space-x-4">
-          <button
-            onClick={() => navigate("/cameras")}
-            className="inline-flex items-center px-3 py-2 text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
-          >
-            <ArrowLeft className="h-4 w-4 mr-2" />
-            Back to Cameras
-          </button>
-          <div>
-            <h1 className="text-2xl font-bold">{camera.name}</h1>
-            <p className="text-muted-foreground">{camera.location}</p>
-          </div>
-        </div>
-
+        <GoBack />
         <div className="flex items-center space-x-2">
-          <button
-            onClick={handleRefresh}
-            className="inline-flex items-center px-3 py-2 text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
-          >
+          <Button variant="outline" onClick={handleRefresh}>
             <RotateCcw className="h-4 w-4 mr-2" />
             Refresh
-          </button>
+          </Button>
 
           {isStreamActive ? (
-            <button
+            <Button
+              variant="destructive"
               onClick={handleStopStream}
               disabled={streamLoading}
-              className="inline-flex items-center px-3 py-2 bg-red-600 text-white text-sm rounded-md hover:bg-red-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {streamLoading ? (
                 <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
@@ -160,12 +145,12 @@ export function CameraStream() {
                 <StopCircle className="h-4 w-4 mr-2" />
               )}
               {streamLoading ? "Stopping..." : "Stop Stream"}
-            </button>
+            </Button>
           ) : (
-            <button
+            <Button
+              variant="default"
               onClick={handleStartStream}
               disabled={streamLoading}
-              className="inline-flex items-center px-3 py-2 bg-green-600 text-white text-sm rounded-md hover:bg-green-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {streamLoading ? (
                 <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
@@ -173,7 +158,7 @@ export function CameraStream() {
                 <Play className="h-4 w-4 mr-2" />
               )}
               {streamLoading ? "Starting..." : "Start Stream"}
-            </button>
+            </Button>
           )}
         </div>
       </div>
