@@ -49,6 +49,14 @@ export function EditCameraModal({ camera, isOpen, onClose, onCameraUpdated }: Ed
   }, [camera]);
 
   const handleInputChange = (field: keyof CameraUpdate, value: any) => {
+    if (field === "port") {
+      //can also enter empty string
+      const isNum = /^[0-9]+$/.test(value) || value === "";
+      if (!isNum) {
+        return;
+      }
+    }
+    
     setFormData(prev => ({ ...prev, [field]: value }));
     // Clear error when user starts typing
     if (errors[field]) {
@@ -237,9 +245,8 @@ export function EditCameraModal({ camera, isOpen, onClose, onCameraUpdated }: Ed
               Port *
             </label>
             <input
-              type="number"
               value={formData.port}
-              onChange={(e) => handleInputChange("port", parseInt(e.target.value) || 554)}
+              onChange={(e) => handleInputChange("port", e.target.value)}
               className={cn(
                 "w-full px-4 py-2 border rounded-md bg-background focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent",
                 errors.port ? "border-red-500" : "border-border"
@@ -259,7 +266,7 @@ export function EditCameraModal({ camera, isOpen, onClose, onCameraUpdated }: Ed
           {/* Path */}
           <div>
             <label className="block text-sm font-medium mb-2">
-              Path (optional)
+              Path
             </label>
             <input
               type="text"
@@ -277,7 +284,7 @@ export function EditCameraModal({ camera, isOpen, onClose, onCameraUpdated }: Ed
           {/* Username */}
           <div>
             <label className="block text-sm font-medium mb-2">
-              Username (optional)
+              Username
             </label>
             <input
               type="text"
@@ -292,7 +299,7 @@ export function EditCameraModal({ camera, isOpen, onClose, onCameraUpdated }: Ed
           {/* Password */}
           <div>
             <label className="block text-sm font-medium mb-2">
-              Password (optional)
+              Password
             </label>
             <input
               type="password"

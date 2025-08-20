@@ -84,10 +84,14 @@ export class CameraService {
   // Delete camera
   async deleteCamera(id: string): Promise<void> {
     try {
-      // Check if camera is currently streaming
-      const streamStatus = await this.getCameraStreamStatus(id);
-      if (streamStatus && typeof streamStatus === 'object' && 'is_running' in streamStatus && streamStatus.is_running) {
-        throw new Error("Cannot delete camera while it's streaming");
+      try {
+        // Check if camera is currently streaming
+        const streamStatus = await this.getCameraStreamStatus(id);
+        if (streamStatus && typeof streamStatus === 'object' && 'is_running' in streamStatus && streamStatus.is_running) {
+          throw new Error("Cannot delete camera while it's streaming");
+        }
+      } catch (error) {
+        console.error(`Failed to check if camera ${id} is streaming:`, error);
       }
 
       await cameraApi.deleteCamera(id);
