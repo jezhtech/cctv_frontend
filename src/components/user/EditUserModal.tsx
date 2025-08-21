@@ -131,7 +131,20 @@ export function EditUserModal({
 
     try {
       await userService.deleteProfileImage(user.id, imageId);
-      setExistingImages((prev) => prev.filter((img) => img.id !== imageId));
+      
+      // Update local state
+      const updatedImages = existingImages.filter((img) => img.id !== imageId);
+      setExistingImages(updatedImages);
+      
+      // Also update the user's profile_images in the backend
+      const updatedUserData = {
+        ...formData,
+        profile_images: updatedImages,
+      };
+      
+      console.log("Updating user after image removal:", updatedImages);
+      await userService.updateUser(user.id, updatedUserData);
+      
     } catch (error) {
       console.error("Failed to delete image:", error);
       setErrors({ general: "Failed to delete image" });
@@ -143,13 +156,23 @@ export function EditUserModal({
 
     try {
       await userService.setPrimaryProfileImage(user.id, imageId);
+      
       // Update local state
-      setExistingImages((prev) =>
-        prev.map((img) => ({
-          ...img,
-          is_primary: img.id === imageId,
-        }))
-      );
+      const updatedImages = existingImages.map((img) => ({
+        ...img,
+        is_primary: img.id === imageId,
+      }));
+      setExistingImages(updatedImages);
+      
+      // Also update the user's profile_images in the backend
+      const updatedUserData = {
+        ...formData,
+        profile_images: updatedImages,
+      };
+      
+      console.log("Updating user after setting primary image:", updatedImages);
+      await userService.updateUser(user.id, updatedUserData);
+      
     } catch (error) {
       console.error("Failed to set primary image:", error);
       setErrors({ general: "Failed to set primary image" });
@@ -193,29 +216,80 @@ export function EditUserModal({
       setLoading(true);
       setErrors({});
 
-      // Update user information
-      await userService.updateUser(user.id, formData);
+      // Generate new image data for the new images
+      let updatedProfileImages = [...existingImages];
+      
+      if (newImages.length > 0) {
+        const timestamp = Date.now();
+        const randomSuffix = Math.random().toString(36).substring(2, 8); // 6 random chars
+
+        const newImageData = newImages.map((img, index) => ({
+          id: `img_${timestamp}_${index + 1}_${randomSuffix}`,
+          filename: `img_${String(index + 1).padStart(3, "0")}_${timestamp}_${randomSuffix}`,
+          is_primary: existingImages.length === 0 && index === 0, // Primary if no existing images
+          uploaded_at: new Date().toISOString(),
+          size: img.file.size,
+          content_type: img.file.type,
+        }));
+
+        // Add new images to the existing ones
+        updatedProfileImages = [...existingImages, ...newImageData];
+      }
+
+      // Update user with new profile images data
+      const updatedUserData = {
+        ...formData,
+        profile_images: updatedProfileImages,
+      };
+
+      console.log("Updating user with profile images:", updatedProfileImages);
+
+      // Update user information with new profile images
+      await userService.updateUser(user.id, updatedUserData);
 
       // Upload new images if any
       if (newImages.length > 0) {
-        for (let i = 0; i < newImages.length; i++) {
-          try {
-            const isPrimary = existingImages.length === 0 && i === 0; // Primary if no existing images
+        try {
+          console.log(`Uploading ${newImages.length} new images for user ${user.id}`);
+
+          // Upload each new image with its pre-assigned name
+          for (let i = 0; i < newImages.length; i++) {
+            const imageName = updatedProfileImages[existingImages.length + i].filename;
+            console.log(`Uploading new image ${i + 1} with name: ${imageName}`);
+            
             await userService.uploadProfileImage(
               user.id,
               newImages[i].file,
-              isPrimary ? "primary" : `secondary_${i + 1}`
+              imageName
             );
-          } catch (error: any) {
-            console.error(`Failed to upload image: ${error}`);
-            setErrors((prev) => ({
-              ...prev,
-              general: `User updated but failed to upload image ${i + 1}: ${
-                error.message || "Unknown error"
-              }`,
-            }));
+            console.log(`Successfully uploaded new image ${i + 1}`);
           }
+
+          console.log(`Successfully uploaded ${newImages.length} new images`);
+          
+          // Show success message for image uploads
+          if (newImages.length > 0) {
+            console.log(`✅ Successfully uploaded ${newImages.length} new image(s) for user ${user.id}`);
+          }
+        } catch (error: any) {
+          console.error(`Failed to upload new images: ${error}`);
+          setErrors((prev) => ({
+            ...prev,
+            general: `User updated but failed to upload new images: ${
+              error.message || "Unknown error"
+            }`,
+          }));
         }
+      }
+
+      // Refresh user data to ensure UI is in sync
+      try {
+        const refreshedUser = await userService.getUserById(user.id);
+        if (refreshedUser) {
+          setExistingImages(refreshedUser.profile_images || []);
+        }
+      } catch (refreshError) {
+        console.error("Failed to refresh user data:", refreshError);
       }
 
       onUserUpdated();
