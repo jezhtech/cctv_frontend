@@ -1,68 +1,17 @@
 import { ApiClient } from "./client";
-import type { User } from "./user";
-import type { Camera } from "./camera";
-
-// Types
-export interface Attendance {
-  id: string;
-  user_id: string;
-  camera_id: string;
-  check_in_time: string;
-  check_out_time?: string;
-  confidence_score: number;
-  location?: string;
-  created_at: string;
-  updated_at: string;
-  user?: User;
-  camera?: Camera;
-}
-
-export interface AttendanceCreate {
-  user_id: string;
-  camera_id: string;
-  confidence_score: number;
-  location?: string;
-}
-
-export interface AttendanceUpdate {
-  check_out_time?: string;
-  confidence_score?: number;
-  location?: string;
-}
-
-export interface AttendanceSearchParams {
-  skip?: number;
-  limit?: number;
-  user_id?: string;
-  camera_id?: string;
-  date_from?: string;
-  date_to?: string;
-  location?: string;
-  min_confidence?: number;
-}
-
-export interface AttendanceStats {
-  total_records: number;
-  today_records: number;
-  this_week_records: number;
-  this_month_records: number;
-  by_location: Record<string, number>;
-  by_camera: Record<string, number>;
-  average_confidence: number;
-}
-
-export interface PaginatedResponse<T> {
-  data: T[];
-  total: number;
-  page: number;
-  size: number;
-  pages: number;
-}
+import type {
+  Attendance,
+  AttendanceCreate,
+  AttendanceSearchParams,
+  AttendanceStats,
+  AttendanceUpdate,
+  PaginatedResponse,
+} from "@/types";
 
 export class AttendanceApi extends ApiClient {
   // Get all attendance records with pagination and search
   async getAttendances(
-    params?: AttendanceSearchParams
+    params?: AttendanceSearchParams,
   ): Promise<PaginatedResponse<Attendance>> {
     return this.get<PaginatedResponse<Attendance>>("/users/attendance", params);
   }
@@ -80,7 +29,7 @@ export class AttendanceApi extends ApiClient {
   // Update an existing attendance record
   async updateAttendance(
     id: string,
-    data: AttendanceUpdate
+    data: AttendanceUpdate,
   ): Promise<Attendance> {
     return this.put<Attendance>(`/users/attendance/${id}`, data);
   }
@@ -93,7 +42,7 @@ export class AttendanceApi extends ApiClient {
   // Get attendance records for a specific user
   async getUserAttendance(
     userId: string,
-    params?: Omit<AttendanceSearchParams, "user_id">
+    params?: Omit<AttendanceSearchParams, "user_id">,
   ): Promise<Attendance[]> {
     return this.get<Attendance[]>("/users/attendance", {
       ...params,
@@ -104,7 +53,7 @@ export class AttendanceApi extends ApiClient {
   // Get attendance records for a specific camera
   async getCameraAttendance(
     cameraId: string,
-    params?: Omit<AttendanceSearchParams, "camera_id">
+    params?: Omit<AttendanceSearchParams, "camera_id">,
   ): Promise<Attendance[]> {
     return this.get<Attendance[]>("/users/attendance", {
       ...params,
@@ -116,7 +65,7 @@ export class AttendanceApi extends ApiClient {
   async getAttendanceByDateRange(
     dateFrom: string,
     dateTo: string,
-    params?: Omit<AttendanceSearchParams, "date_from" | "date_to">
+    params?: Omit<AttendanceSearchParams, "date_from" | "date_to">,
   ): Promise<Attendance[]> {
     return this.get<Attendance[]>("/users/attendance", {
       ...params,
@@ -137,14 +86,14 @@ export class AttendanceApi extends ApiClient {
     const startOfWeek = new Date(now);
     startOfWeek.setDate(now.getDate() - now.getDay());
     startOfWeek.setHours(0, 0, 0, 0);
-    
+
     const endOfWeek = new Date(startOfWeek);
     endOfWeek.setDate(startOfWeek.getDate() + 6);
     endOfWeek.setHours(23, 59, 59, 999);
-    
+
     return this.getAttendanceByDateRange(
       startOfWeek.toISOString(),
-      endOfWeek.toISOString()
+      endOfWeek.toISOString(),
     );
   }
 
@@ -153,10 +102,10 @@ export class AttendanceApi extends ApiClient {
     const now = new Date();
     const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
     const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0);
-    
+
     return this.getAttendanceByDateRange(
       startOfMonth.toISOString(),
-      endOfMonth.toISOString()
+      endOfMonth.toISOString(),
     );
   }
 
@@ -168,7 +117,7 @@ export class AttendanceApi extends ApiClient {
   // Export attendance data
   async exportAttendance(
     format: "csv" | "excel" | "json",
-    params?: AttendanceSearchParams
+    params?: AttendanceSearchParams,
   ): Promise<Blob> {
     const response = await this.request({
       method: "GET",
@@ -181,11 +130,11 @@ export class AttendanceApi extends ApiClient {
 
   // Bulk delete attendance records
   async bulkDeleteAttendance(
-    attendanceIds: string[]
+    attendanceIds: string[],
   ): Promise<{ message: string; deleted_count: number }> {
     return this.delete<{ message: string; deleted_count: number }>(
       "/users/attendance/bulk-delete",
-      { data: { attendance_ids: attendanceIds } }
+      { data: { attendance_ids: attendanceIds } },
     );
   }
 
@@ -193,7 +142,7 @@ export class AttendanceApi extends ApiClient {
   async getAttendanceSummaryByUser(
     userId: string,
     dateFrom?: string,
-    dateTo?: string
+    dateTo?: string,
   ): Promise<{
     user_id: string;
     total_checkins: number;
@@ -219,4 +168,3 @@ export class AttendanceApi extends ApiClient {
 
 // Export singleton instance
 export const attendanceApi = new AttendanceApi();
-

@@ -28,6 +28,26 @@ export function Settings() {
     logLevel: "info",
   });
 
+  const [notificationApiKeys, setNotificationApiKeys] = useState({
+    whatsapp: {
+      enabled: false,
+      accountSid: "",
+      authToken: "",
+      from: "",
+    },
+    email: {
+      enabled: false,
+      apiKey: "",
+      from: "",
+    },
+    sms: {
+      enabled: false,
+      accountSid: "",
+      authToken: "",
+      from: "",
+    },
+  });
+
   const handleThemeChange = (newTheme: "light" | "dark" | "system") => {
     setTheme(newTheme);
   };
@@ -41,11 +61,25 @@ export function Settings() {
 
   const handleSystemSettingChange = (
     key: keyof typeof systemSettings,
-    value: any
+    value: any,
   ) => {
     setSystemSettings((prev) => ({
       ...prev,
       [key]: value,
+    }));
+  };
+
+  const handleApiKeyChange = (
+    type: "whatsapp" | "email" | "sms",
+    field: string,
+    value: string | boolean,
+  ) => {
+    setNotificationApiKeys((prev) => ({
+      ...prev,
+      [type]: {
+        ...prev[type],
+        [field]: value,
+      },
     }));
   };
 
@@ -56,7 +90,8 @@ export function Settings() {
       JSON.stringify({
         notifications,
         systemSettings,
-      })
+        notificationApiKeys,
+      }),
     );
     // Show success message
   };
@@ -75,6 +110,25 @@ export function Settings() {
         autoBackup: true,
         debugMode: false,
         logLevel: "info",
+      });
+      setNotificationApiKeys({
+        whatsapp: {
+          enabled: false,
+          accountSid: "",
+          authToken: "",
+          from: "",
+        },
+        email: {
+          enabled: false,
+          apiKey: "",
+          from: "",
+        },
+        sms: {
+          enabled: false,
+          accountSid: "",
+          authToken: "",
+          from: "",
+        },
       });
     }
   };
@@ -108,7 +162,7 @@ export function Settings() {
                     "flex items-center px-4 py-2 rounded-md border transition-colors",
                     theme === "light"
                       ? "bg-primary text-primary-foreground border-primary"
-                      : "bg-background text-foreground border-border hover:bg-accent"
+                      : "bg-background text-foreground border-border hover:bg-accent",
                   )}
                 >
                   <Sun className="h-4 w-4 mr-2" />
@@ -120,7 +174,7 @@ export function Settings() {
                     "flex items-center px-4 py-2 rounded-md border transition-colors",
                     theme === "dark"
                       ? "bg-primary text-primary-foreground border-primary"
-                      : "bg-background text-foreground border-border hover:bg-accent"
+                      : "bg-background text-foreground border-border hover:bg-accent",
                   )}
                 >
                   <Moon className="h-4 w-4 mr-2" />
@@ -132,7 +186,7 @@ export function Settings() {
                     "flex items-center px-4 py-2 rounded-md border transition-colors",
                     theme === "system"
                       ? "bg-primary text-primary-foreground border-primary"
-                      : "bg-background text-foreground border-border hover:bg-accent"
+                      : "bg-background text-foreground border-border hover:bg-accent",
                   )}
                 >
                   <Monitor className="h-4 w-4 mr-2" />
@@ -164,13 +218,13 @@ export function Settings() {
                 onClick={() => handleNotificationChange("email")}
                 className={cn(
                   "relative inline-flex h-6 w-11 items-center rounded-full transition-colors",
-                  notifications.email ? "bg-primary" : "bg-muted"
+                  notifications.email ? "bg-primary" : "bg-muted",
                 )}
               >
                 <span
                   className={cn(
                     "inline-block h-4 w-4 transform rounded-full bg-white transition-transform",
-                    notifications.email ? "translate-x-6" : "translate-x-1"
+                    notifications.email ? "translate-x-6" : "translate-x-1",
                   )}
                 />
               </button>
@@ -189,13 +243,13 @@ export function Settings() {
                 onClick={() => handleNotificationChange("push")}
                 className={cn(
                   "relative inline-flex h-6 w-11 items-center rounded-full transition-colors",
-                  notifications.push ? "bg-primary" : "bg-muted"
+                  notifications.push ? "bg-primary" : "bg-muted",
                 )}
               >
                 <span
                   className={cn(
                     "inline-block h-4 w-4 transform rounded-full bg-white transition-transform",
-                    notifications.push ? "translate-x-6" : "translate-x-1"
+                    notifications.push ? "translate-x-6" : "translate-x-1",
                   )}
                 />
               </button>
@@ -212,13 +266,15 @@ export function Settings() {
                 onClick={() => handleNotificationChange("attendance")}
                 className={cn(
                   "relative inline-flex h-6 w-11 items-center rounded-full transition-colors",
-                  notifications.attendance ? "bg-primary" : "bg-muted"
+                  notifications.attendance ? "bg-primary" : "bg-muted",
                 )}
               >
                 <span
                   className={cn(
                     "inline-block h-4 w-4 transform rounded-full bg-white transition-transform",
-                    notifications.attendance ? "translate-x-6" : "translate-x-1"
+                    notifications.attendance
+                      ? "translate-x-6"
+                      : "translate-x-1",
                   )}
                 />
               </button>
@@ -235,16 +291,240 @@ export function Settings() {
                 onClick={() => handleNotificationChange("errors")}
                 className={cn(
                   "relative inline-flex h-6 w-11 items-center rounded-full transition-colors",
-                  notifications.errors ? "bg-primary" : "bg-muted"
+                  notifications.errors ? "bg-primary" : "bg-muted",
                 )}
               >
                 <span
                   className={cn(
                     "inline-block h-4 w-4 transform rounded-full bg-white transition-transform",
-                    notifications.errors ? "translate-x-6" : "translate-x-1"
+                    notifications.errors ? "translate-x-6" : "translate-x-1",
                   )}
                 />
               </button>
+            </div>
+          </div>
+        </div>
+
+        {/* External Notification Settings */}
+        <div className="bg-card border rounded-lg p-6">
+          <div className="flex items-center mb-4">
+            <Bell className="h-5 w-5 mr-2 text-primary" />
+            <h2 className="text-lg font-semibold">External Notifications</h2>
+          </div>
+
+          <div className="space-y-4">
+            {/* WhatsApp */}
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <div>
+                  <label className="text-sm font-medium">WhatsApp</label>
+                  <p className="text-sm text-muted-foreground">
+                    Receive notifications via WhatsApp
+                  </p>
+                </div>
+                <button
+                  onClick={() =>
+                    handleApiKeyChange(
+                      "whatsapp",
+                      "enabled",
+                      !notificationApiKeys.whatsapp.enabled,
+                    )
+                  }
+                  className={cn(
+                    "relative inline-flex h-6 w-11 items-center rounded-full transition-colors",
+                    notificationApiKeys.whatsapp.enabled
+                      ? "bg-primary"
+                      : "bg-muted",
+                  )}
+                >
+                  <span
+                    className={cn(
+                      "inline-block h-4 w-4 transform rounded-full bg-white transition-transform",
+                      notificationApiKeys.whatsapp.enabled
+                        ? "translate-x-6"
+                        : "translate-x-1",
+                    )}
+                  />
+                </button>
+              </div>
+              {notificationApiKeys.whatsapp.enabled && (
+                <div className="space-y-2 pl-6">
+                  <div>
+                    <label className="text-sm font-medium">Account SID</label>
+                    <input
+                      type="text"
+                      value={notificationApiKeys.whatsapp.accountSid}
+                      onChange={(e) =>
+                        handleApiKeyChange(
+                          "whatsapp",
+                          "accountSid",
+                          e.target.value,
+                        )
+                      }
+                      className="mt-1 w-full px-3 py-2 border rounded-md bg-background focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium">Auth Token</label>
+                    <input
+                      type="text"
+                      value={notificationApiKeys.whatsapp.authToken}
+                      onChange={(e) =>
+                        handleApiKeyChange(
+                          "whatsapp",
+                          "authToken",
+                          e.target.value,
+                        )
+                      }
+                      className="mt-1 w-full px-3 py-2 border rounded-md bg-background focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium">From</label>
+                    <input
+                      type="text"
+                      value={notificationApiKeys.whatsapp.from}
+                      onChange={(e) =>
+                        handleApiKeyChange("whatsapp", "from", e.target.value)
+                      }
+                      className="mt-1 w-full px-3 py-2 border rounded-md bg-background focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
+                    />
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Email */}
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <div>
+                  <label className="text-sm font-medium">Email</label>
+                  <p className="text-sm text-muted-foreground">
+                    Receive notifications via Email (SendGrid)
+                  </p>
+                </div>
+                <button
+                  onClick={() =>
+                    handleApiKeyChange(
+                      "email",
+                      "enabled",
+                      !notificationApiKeys.email.enabled,
+                    )
+                  }
+                  className={cn(
+                    "relative inline-flex h-6 w-11 items-center rounded-full transition-colors",
+                    notificationApiKeys.email.enabled
+                      ? "bg-primary"
+                      : "bg-muted",
+                  )}
+                >
+                  <span
+                    className={cn(
+                      "inline-block h-4 w-4 transform rounded-full bg-white transition-transform",
+                      notificationApiKeys.email.enabled
+                        ? "translate-x-6"
+                        : "translate-x-1",
+                    )}
+                  />
+                </button>
+              </div>
+              {notificationApiKeys.email.enabled && (
+                <div className="space-y-2 pl-6">
+                  <div>
+                    <label className="text-sm font-medium">API Key</label>
+                    <input
+                      type="text"
+                      value={notificationApiKeys.email.apiKey}
+                      onChange={(e) =>
+                        handleApiKeyChange("email", "apiKey", e.target.value)
+                      }
+                      className="mt-1 w-full px-3 py-2 border rounded-md bg-background focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium">From</label>
+                    <input
+                      type="text"
+                      value={notificationApiKeys.email.from}
+                      onChange={(e) =>
+                        handleApiKeyChange("email", "from", e.target.value)
+                      }
+                      className="mt-1 w-full px-3 py-2 border rounded-md bg-background focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
+                    />
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* SMS */}
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <div>
+                  <label className="text-sm font-medium">SMS</label>
+                  <p className="text-sm text-muted-foreground">
+                    Receive notifications via SMS
+                  </p>
+                </div>
+                <button
+                  onClick={() =>
+                    handleApiKeyChange(
+                      "sms",
+                      "enabled",
+                      !notificationApiKeys.sms.enabled,
+                    )
+                  }
+                  className={cn(
+                    "relative inline-flex h-6 w-11 items-center rounded-full transition-colors",
+                    notificationApiKeys.sms.enabled ? "bg-primary" : "bg-muted",
+                  )}
+                >
+                  <span
+                    className={cn(
+                      "inline-block h-4 w-4 transform rounded-full bg-white transition-transform",
+                      notificationApiKeys.sms.enabled
+                        ? "translate-x-6"
+                        : "translate-x-1",
+                    )}
+                  />
+                </button>
+              </div>
+              {notificationApiKeys.sms.enabled && (
+                <div className="space-y-2 pl-6">
+                  <div>
+                    <label className="text-sm font-medium">Account SID</label>
+                    <input
+                      type="text"
+                      value={notificationApiKeys.sms.accountSid}
+                      onChange={(e) =>
+                        handleApiKeyChange("sms", "accountSid", e.target.value)
+                      }
+                      className="mt-1 w-full px-3 py-2 border rounded-md bg-background focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium">Auth Token</label>
+                    <input
+                      type="text"
+                      value={notificationApiKeys.sms.authToken}
+                      onChange={(e) =>
+                        handleApiKeyChange("sms", "authToken", e.target.value)
+                      }
+                      className="mt-1 w-full px-3 py-2 border rounded-md bg-background focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium">From</label>
+                    <input
+                      type="text"
+                      value={notificationApiKeys.sms.from}
+                      onChange={(e) =>
+                        handleApiKeyChange("sms", "from", e.target.value)
+                      }
+                      className="mt-1 w-full px-3 py-2 border rounded-md bg-background focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
+                    />
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         </div>
@@ -268,12 +548,12 @@ export function Settings() {
                 onClick={() =>
                   handleSystemSettingChange(
                     "autoBackup",
-                    !systemSettings.autoBackup
+                    !systemSettings.autoBackup,
                   )
                 }
                 className={cn(
                   "relative inline-flex h-6 w-11 items-center rounded-full transition-colors",
-                  systemSettings.autoBackup ? "bg-primary" : "bg-muted"
+                  systemSettings.autoBackup ? "bg-primary" : "bg-muted",
                 )}
               >
                 <span
@@ -281,7 +561,7 @@ export function Settings() {
                     "inline-block h-4 w-4 transform rounded-full bg-white transition-transform",
                     systemSettings.autoBackup
                       ? "translate-x-6"
-                      : "translate-x-1"
+                      : "translate-x-1",
                   )}
                 />
               </button>
@@ -298,18 +578,20 @@ export function Settings() {
                 onClick={() =>
                   handleSystemSettingChange(
                     "debugMode",
-                    !systemSettings.debugMode
+                    !systemSettings.debugMode,
                   )
                 }
                 className={cn(
                   "relative inline-flex h-6 w-11 items-center rounded-full transition-colors",
-                  systemSettings.debugMode ? "bg-primary" : "bg-muted"
+                  systemSettings.debugMode ? "bg-primary" : "bg-muted",
                 )}
               >
                 <span
                   className={cn(
                     "inline-block h-4 w-4 transform rounded-full bg-white transition-transform",
-                    systemSettings.debugMode ? "translate-x-6" : "translate-x-1"
+                    systemSettings.debugMode
+                      ? "translate-x-6"
+                      : "translate-x-1",
                   )}
                 />
               </button>

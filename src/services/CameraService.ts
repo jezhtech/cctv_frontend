@@ -1,18 +1,13 @@
-import { cameraApi, type Camera, type CameraCreate, type CameraUpdate, type StreamStatus } from "@/lib/api/camera";
-
-export interface CameraFilters {
-  location?: string;
-  isActive?: boolean;
-  frameRate?: number;
-}
-
-export interface CameraStats {
-  total: number;
-  active: number;
-  inactive: number;
-  byLocation: Record<string, number>;
-  averageFrameRate: number;
-}
+import type {
+  Camera,
+  CameraCreate,
+  StreamStatus,
+  CameraUpdate,
+  CameraFilters,
+  CameraStats,
+  FaceDetection,
+} from "@/types";
+import { cameraApi } from "@/lib/api/camera";
 
 export class CameraService {
   // Get all cameras with optional filtering
@@ -23,17 +18,23 @@ export class CameraService {
 
       // Apply filters
       if (filters?.location) {
-        cameras = cameras.filter(camera => 
-          camera.location.toLowerCase().includes(filters.location!.toLowerCase())
+        cameras = cameras.filter((camera) =>
+          camera.location
+            .toLowerCase()
+            .includes(filters.location!.toLowerCase())
         );
       }
 
       if (filters?.isActive !== undefined) {
-        cameras = cameras.filter(camera => camera.is_active === filters.isActive);
+        cameras = cameras.filter(
+          (camera) => camera.is_active === filters.isActive
+        );
       }
 
       if (filters?.frameRate) {
-        cameras = cameras.filter(camera => camera.frame_rate >= filters.frameRate!);
+        cameras = cameras.filter(
+          (camera) => camera.frame_rate >= filters.frameRate!
+        );
       }
 
       return cameras;
@@ -58,7 +59,7 @@ export class CameraService {
     try {
       // Validate camera data
       this.validateCameraData(cameraData);
-      
+
       return await cameraApi.createCamera(cameraData);
     } catch (error) {
       console.error("Failed to create camera:", error);
@@ -87,7 +88,12 @@ export class CameraService {
       try {
         // Check if camera is currently streaming
         const streamStatus = await this.getCameraStreamStatus(id);
-        if (streamStatus && typeof streamStatus === 'object' && 'is_running' in streamStatus && streamStatus.is_running) {
+        if (
+          streamStatus &&
+          typeof streamStatus === "object" &&
+          "is_running" in streamStatus &&
+          streamStatus.is_running
+        ) {
           throw new Error("Cannot delete camera while it's streaming");
         }
       } catch (error) {
@@ -127,7 +133,9 @@ export class CameraService {
   }
 
   // Get camera stream status
-  async getCameraStreamStatus(id: string): Promise<StreamStatus | { message: string }> {
+  async getCameraStreamStatus(
+    id: string
+  ): Promise<StreamStatus | { message: string }> {
     try {
       return await cameraApi.getCameraStreamStatus(id);
     } catch (error) {
@@ -168,7 +176,10 @@ export class CameraService {
   }
 
   // Bulk update camera status
-  async bulkUpdateCameraStatus(cameraIds: string[], isActive: boolean): Promise<void> {
+  async bulkUpdateCameraStatus(
+    cameraIds: string[],
+    isActive: boolean
+  ): Promise<void> {
     try {
       if (cameraIds.length === 0) {
         throw new Error("No camera IDs provided");
@@ -185,17 +196,20 @@ export class CameraService {
   async getCameraStats(): Promise<CameraStats> {
     try {
       const cameras = await this.getAllCameras();
-      
+
       const total = cameras.length;
-      const active = cameras.filter(c => c.is_active).length;
+      const active = cameras.filter((c) => c.is_active).length;
       const inactive = total - active;
-      
+
       const byLocation: Record<string, number> = {};
-      cameras.forEach(camera => {
+      cameras.forEach((camera) => {
         byLocation[camera.location] = (byLocation[camera.location] || 0) + 1;
       });
 
-      const totalFrameRate = cameras.reduce((sum, camera) => sum + camera.frame_rate, 0);
+      const totalFrameRate = cameras.reduce(
+        (sum, camera) => sum + camera.frame_rate,
+        0
+      );
       const averageFrameRate = total > 0 ? totalFrameRate / total : 0;
 
       return {
@@ -203,7 +217,7 @@ export class CameraService {
         active,
         inactive,
         byLocation,
-        averageFrameRate: Math.round(averageFrameRate * 100) / 100
+        averageFrameRate: Math.round(averageFrameRate * 100) / 100,
       };
     } catch (error) {
       console.error("Failed to get camera statistics:", error);
@@ -242,9 +256,17 @@ export class CameraService {
   async isCameraStreaming(id: string): Promise<boolean> {
     try {
       const status = await this.getCameraStreamStatus(id);
-      return status && typeof status === 'object' && 'is_running' in status && status.is_running;
+      return (
+        status &&
+        typeof status === "object" &&
+        "is_running" in status &&
+        status.is_running
+      );
     } catch (error) {
-      console.error(`Failed to check streaming status for camera ${id}:`, error);
+      console.error(
+        `Failed to check streaming status for camera ${id}:`,
+        error
+      );
       return false;
     }
   }
@@ -259,12 +281,26 @@ export class CameraService {
     try {
       const camera = await this.getCameraById(id);
       const streamStatus = await this.getCameraStreamStatus(id);
-      
-      const isStreaming = streamStatus && typeof streamStatus === 'object' && 'is_running' in streamStatus && streamStatus.is_running;
-      const lastSeen = streamStatus && typeof streamStatus === 'object' && 'last_frame_time' in streamStatus ? streamStatus.last_frame_time : undefined;
-      
+
+      const isStreaming =
+        streamStatus &&
+        typeof streamStatus === "object" &&
+        "is_running" in streamStatus &&
+        streamStatus.is_running;
+      const lastSeen =
+        streamStatus &&
+        typeof streamStatus === "object" &&
+        "last_frame_time" in streamStatus
+          ? streamStatus.last_frame_time
+          : undefined;
+
       const errors: string[] = [];
-      if (streamStatus && typeof streamStatus === 'object' && 'errors_count' in streamStatus && streamStatus.errors_count > 0) {
+      if (
+        streamStatus &&
+        typeof streamStatus === "object" &&
+        "errors_count" in streamStatus &&
+        streamStatus.errors_count > 0
+      ) {
         errors.push(`Stream errors: ${streamStatus.errors_count}`);
       }
 
@@ -272,19 +308,27 @@ export class CameraService {
         isOnline: camera.is_active,
         isStreaming,
         lastSeen,
-        errors: errors.length > 0 ? errors : undefined
+        errors: errors.length > 0 ? errors : undefined,
       };
     } catch (error) {
       console.error(`Failed to get health status for camera ${id}:`, error);
       return {
         isOnline: false,
         isStreaming: false,
-        errors: ["Failed to connect to camera"]
+        errors: ["Failed to connect to camera"],
       };
+    }
+  }
+
+  async getCameraDetections(id: string): Promise<FaceDetection[]> {
+    try {
+      return await cameraApi.getCameraDetections(id);
+    } catch (error) {
+      console.error(`Failed to get camera detections for camera ${id}:`, error);
+      throw error;
     }
   }
 }
 
 // Export singleton instance
 export const cameraService = new CameraService();
-

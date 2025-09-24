@@ -1,12 +1,8 @@
-import {
-  Plus,
-  X,
-  CameraIcon,
-} from "lucide-react";
+import { Plus, X, CameraIcon } from "lucide-react";
 import { useEffect, useState } from "react";
 
 import { cameraService } from "@/services";
-import type { Camera, StreamStatus } from "@/lib/api/camera";
+import type { Camera, StreamStatus } from "@/types";
 import { AddCameraModal, EditCameraModal, CameraCard } from "@/components";
 
 export function Cameras() {
@@ -25,18 +21,6 @@ export function Cameras() {
     fetchStreamStatuses();
   }, []);
 
-  const fetchCameras = async () => {
-    try {
-      setLoading(true);
-      const camerasData = await cameraService.getAllCameras();
-      setCameras(camerasData);
-    } catch (error) {
-      console.error("Failed to fetch cameras:", error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
   const fetchStreamStatuses = async () => {
     try {
       const statuses = await cameraService.getAllStreamsStatus();
@@ -46,21 +30,15 @@ export function Cameras() {
     }
   };
 
-  const handleStartStream = async (cameraId: string) => {
+  const fetchCameras = async () => {
     try {
-      await cameraService.startCameraStream(cameraId);
-      await fetchStreamStatuses();
+      setLoading(true);
+      const camerasData = await cameraService.getAllCameras();
+      setCameras(camerasData);
     } catch (error) {
-      console.error("Failed to start stream:", error);
-    }
-  };
-
-  const handleStopStream = async (cameraId: string) => {
-    try {
-      await cameraService.stopCameraStream(cameraId);
-      await fetchStreamStatuses();
-    } catch (error) {
-      console.error("Failed to stop stream:", error);
+      console.error("Failed to fetch cameras:", error);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -110,7 +88,7 @@ export function Cameras() {
             Manage and monitor your camera streams
           </p>
         </div>
-        <button 
+        <button
           onClick={() => setShowAddCameraModal(true)}
           className="inline-flex items-center px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90 transition-colors"
         >
@@ -129,8 +107,7 @@ export function Cameras() {
               key={camera.id}
               camera={camera}
               streamStatus={streamStatus}
-              onStartStream={handleStartStream}
-              onStopStream={handleStopStream}
+              onStreamChange={fetchStreamStatuses}
               onEdit={handleEditCamera}
               onDelete={handleDeleteCamera}
             />
@@ -146,7 +123,7 @@ export function Cameras() {
           <p className="text-muted-foreground mb-4">
             Get started by adding your first camera to the system.
           </p>
-          <button 
+          <button
             onClick={() => setShowAddCameraModal(true)}
             className="inline-flex items-center px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90 transition-colors"
           >
@@ -191,10 +168,10 @@ export function Cameras() {
       )}
 
       {/* Add Camera Modal */}
-      <AddCameraModal 
+      <AddCameraModal
         isOpen={showAddCameraModal}
-        onClose={() => setShowAddCameraModal(false)} 
-        onCameraAdded={handleCameraAdded} 
+        onClose={() => setShowAddCameraModal(false)}
+        onCameraAdded={handleCameraAdded}
       />
 
       {/* Edit Camera Modal */}

@@ -35,7 +35,7 @@ export class ApiClient {
         }
         return config;
       },
-      (error) => Promise.reject(error)
+      (error) => Promise.reject(error),
     );
 
     // Response interceptor
@@ -48,7 +48,7 @@ export class ApiClient {
           window.location.href = "/login";
         }
         return Promise.reject(error);
-      }
+      },
     );
   }
 
@@ -60,13 +60,13 @@ export class ApiClient {
     } catch (error: any) {
       // Extract error message from different possible sources
       let errorMessage = "An error occurred";
-      
+
       if (error.response?.data) {
         if (error.response.data.detail) {
           errorMessage = error.response.data.detail;
         } else if (error.response.data.message) {
           errorMessage = error.response.data.message;
-        } else if (typeof error.response.data === 'string') {
+        } else if (typeof error.response.data === "string") {
           errorMessage = error.response.data;
         } else if (error.response.data.error) {
           errorMessage = error.response.data.error;
@@ -74,12 +74,12 @@ export class ApiClient {
       } else if (error.message) {
         errorMessage = error.message;
       }
-      
+
       // Create a more informative error
       const enhancedError = new Error(errorMessage);
       (enhancedError as any).status = error.response?.status;
       (enhancedError as any).response = error.response;
-      
+
       throw enhancedError;
     }
   }
@@ -112,10 +112,11 @@ export class ApiClient {
   }
 
   // DELETE request
-  protected async delete<T>(url: string): Promise<T> {
+  protected async delete<T>(url: string, data?: any): Promise<T> {
     return this.request({
       method: "DELETE",
       url,
+      data,
     });
   }
 

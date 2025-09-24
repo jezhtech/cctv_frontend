@@ -1,60 +1,39 @@
 import {
   Play,
   Wifi,
+  User,
+  Clock,
+  Target,
   WifiOff,
   Activity,
   RotateCcw,
   StopCircle,
-  User,
-  Clock,
-  Target,
-  TrendingUp,
 } from "lucide-react";
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 
 import { cn } from "@/lib/utils";
-import { cameraService, streamingService } from "@/services";
-import type { Camera, StreamStatus } from "@/lib/api/camera";
-import { Button } from "@/components/ui/button";
 import { GoBack } from "@/components/go-back";
-
-// Interface for face detection data
-interface FaceDetection {
-  timestamp: string;
-  user_name?: string;
-  user_id?: string;
-  confidence: number;
-  bbox: {
-    x: number;
-    y: number;
-    width: number;
-    height: number;
-  };
-}
+import { Button } from "@/components/ui/button";
+import { cameraService, streamingService } from "@/services";
+import type { Camera, FaceDetectionResults, StreamStatus } from "@/types";
 
 // Interface for face detection results from API
-interface FaceDetectionResults {
-  recent_detections: FaceDetection[];
-  total_faces_detected: number;
-  total_faces_recognized: number;
-  recognition_accuracy: number;
-  active_faces_count: number;
-  last_recognition_time?: string;
-}
 
 export function CameraStream() {
   const { cameraId } = useParams<{ cameraId: string }>();
   const navigate = useNavigate();
+
   const [camera, setCamera] = useState<Camera | null>(null);
   const [streamStatus, setStreamStatus] = useState<StreamStatus | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isStreamActive, setIsStreamActive] = useState(false);
   const [streamLoading, setStreamLoading] = useState(false);
-  
+
   // New state for face detections
-  const [faceDetections, setFaceDetections] = useState<FaceDetectionResults | null>(null);
+  const [faceDetections, setFaceDetections] =
+    useState<FaceDetectionResults | null>(null);
   const [detectionLoading, setDetectionLoading] = useState(false);
   const [lastDetectionCount, setLastDetectionCount] = useState(0);
   const [showNewDetectionAlert, setShowNewDetectionAlert] = useState(false);
@@ -66,7 +45,7 @@ export function CameraStream() {
 
       // Poll stream status every 2 seconds
       const statusInterval = setInterval(loadStreamStatus, 2000);
-      
+
       // Poll face detections every 1 second when stream is active
       let detectionInterval: NodeJS.Timeout;
       if (isStreamActive) {
@@ -127,21 +106,28 @@ export function CameraStream() {
 
   const loadFaceDetections = async () => {
     if (!isStreamActive || !cameraId) return;
-    
+
     try {
       setDetectionLoading(true);
-      const response = await fetch(`${import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000'}/api/v1/streams/${cameraId}/face-detections`);
-      
+      const response = await fetch(
+        `${
+          import.meta.env.VITE_API_BASE_URL || "http://localhost:8000"
+        }/api/v1/streams/${cameraId}/face-detections`,
+      );
+
       if (response.ok) {
         const data: FaceDetectionResults = await response.json();
-        
+        console.log(data);
         // Check for new detections
-        if (lastDetectionCount > 0 && data.recent_detections.length > lastDetectionCount) {
+        if (
+          lastDetectionCount > 0 &&
+          data.recent_detections.length > lastDetectionCount
+        ) {
           setShowNewDetectionAlert(true);
           // Auto-hide alert after 3 seconds
           setTimeout(() => setShowNewDetectionAlert(false), 3000);
         }
-        
+
         setLastDetectionCount(data.recent_detections.length);
         setFaceDetections(data);
       }
@@ -244,38 +230,8 @@ export function CameraStream() {
     <div className="space-y-4">
       {/* Header */}
       <div className="flex items-center justify-between">
-        <div className="flex items-center space-x-4">
-          <GoBack />
-          
-          {/* Real-time Detection Counter */}
-          {isStreamActive && faceDetections && (
-            <div className="flex items-center space-x-3">
-              <div className="flex items-center space-x-3 px-4 py-2 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
-                <Target className="h-4 w-4 text-blue-600" />
-                <div className="text-sm">
-                  <span className="font-medium text-blue-900 dark:text-blue-100">
-                    {faceDetections.active_faces_count}
-                  </span>
-                  <span className="text-blue-700 dark:text-blue-300 ml-1">
-                    active detection{faceDetections.active_faces_count !== 1 ? 's' : ''}
-                  </span>
-                </div>
-              </div>
-              
-              {/* View Frame with Boxes Button */}
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => window.open(`${import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000'}/api/v1/streams/${cameraId}/frame-with-boxes`, '_blank')}
-                className="h-8 px-3 text-xs"
-              >
-                <Target className="h-3 w-3 mr-1" />
-                View Boxes
-              </Button>
-            </div>
-          )}
-        </div>
-        
+        <GoBack />
+
         <div className="flex items-center space-x-2">
           <Button variant="outline" onClick={handleRefresh}>
             <RotateCcw className="h-4 w-4 mr-2" />
@@ -314,7 +270,7 @@ export function CameraStream() {
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Video Stream */}
-        <div className="lg:col-span-2">
+        <div className="lg:col-span-2 space-y-6">
           <div className="bg-card border rounded-lg overflow-hidden">
             <div className="p-4 border-b">
               <h2 className="text-lg font-semibold flex items-center space-x-2">
@@ -329,7 +285,7 @@ export function CameraStream() {
                     "px-2 py-1 text-xs rounded-full font-medium",
                     isStreamActive
                       ? "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200"
-                      : "bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200"
+                      : "bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200",
                   )}
                 >
                   {isStreamActive ? "Active" : "Inactive"}
@@ -381,7 +337,7 @@ export function CameraStream() {
                       <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-500 ml-2"></div>
                     )}
                   </h3>
-                  
+
                   <Button
                     variant="outline"
                     size="sm"
@@ -389,7 +345,12 @@ export function CameraStream() {
                     disabled={detectionLoading || !isStreamActive}
                     className="h-8 px-3"
                   >
-                    <RotateCcw className={cn("h-3 w-3 mr-1", detectionLoading && "animate-spin")} />
+                    <RotateCcw
+                      className={cn(
+                        "h-3 w-3 mr-1",
+                        detectionLoading && "animate-spin",
+                      )}
+                    />
                     Refresh
                   </Button>
                 </div>
@@ -406,7 +367,7 @@ export function CameraStream() {
                     </div>
                   </div>
                 )}
-                
+
                 {faceDetections ? (
                   <div className="space-y-4">
                     {/* Detection Statistics */}
@@ -415,25 +376,36 @@ export function CameraStream() {
                         <div className="text-2xl font-bold text-blue-600">
                           {faceDetections.total_faces_detected}
                         </div>
-                        <div className="text-sm text-muted-foreground">Total Detected</div>
+                        <div className="text-sm text-muted-foreground">
+                          Total Detected
+                        </div>
                       </div>
                       <div className="text-center">
                         <div className="text-2xl font-bold text-green-600">
                           {faceDetections.total_faces_recognized}
                         </div>
-                        <div className="text-sm text-muted-foreground">Recognized</div>
+                        <div className="text-sm text-muted-foreground">
+                          Recognized
+                        </div>
                       </div>
                       <div className="text-center">
                         <div className="text-2xl font-bold text-purple-600">
                           {faceDetections.active_faces_count}
                         </div>
-                        <div className="text-sm text-muted-foreground">Active Now</div>
+                        <div className="text-sm text-muted-foreground">
+                          Active Now
+                        </div>
                       </div>
                       <div className="text-center">
                         <div className="text-2xl font-bold text-orange-600">
-                          {(faceDetections.recognition_accuracy * 100).toFixed(1)}%
+                          {(faceDetections.recognition_accuracy * 100).toFixed(
+                            1,
+                          )}
+                          %
                         </div>
-                        <div className="text-sm text-muted-foreground">Accuracy</div>
+                        <div className="text-sm text-muted-foreground">
+                          Accuracy
+                        </div>
                       </div>
                     </div>
 
@@ -447,70 +419,103 @@ export function CameraStream() {
                         <div className="flex items-center space-x-2">
                           <div className="flex items-center space-x-1">
                             <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
-                            <span className="text-xs text-muted-foreground">Live</span>
+                            <span className="text-xs text-muted-foreground">
+                              Live
+                            </span>
                           </div>
                           <span className="text-xs text-muted-foreground">
-                            {faceDetections.recent_detections.length} detection{faceDetections.recent_detections.length !== 1 ? 's' : ''}
+                            {faceDetections.recent_detections.length} detection
+                            {faceDetections.recent_detections.length !== 1
+                              ? "s"
+                              : ""}
                           </span>
                         </div>
                       </div>
                       <div className="space-y-2 max-h-64 overflow-y-auto">
                         {faceDetections.recent_detections.length > 0 ? (
-                          faceDetections.recent_detections.map((detection, index) => (
-                            <div
-                              key={index}
-                              className="flex items-center justify-between p-3 bg-background border rounded-lg hover:bg-muted/50 transition-colors group"
-                            >
-                              <div className="flex items-center space-x-3">
-                                <div className={cn(
-                                  "w-8 h-8 rounded-full flex items-center justify-center",
-                                  detection.user_name 
-                                    ? "bg-green-100 dark:bg-green-900" 
-                                    : "bg-blue-100 dark:bg-blue-900"
-                                )}>
-                                  <User className={cn(
-                                    "h-4 w-4",
-                                    detection.user_name 
-                                      ? "text-green-600" 
-                                      : "text-blue-600"
-                                  )} />
-                                </div>
-                                <div>
-                                  <div className="font-medium">
-                                    {detection.user_name || "Unknown Person"}
+                          faceDetections.recent_detections.map(
+                            (detection, index) => (
+                              <div
+                                key={index}
+                                className="flex items-center justify-between p-3 bg-background border rounded-lg hover:bg-muted/50 transition-colors group"
+                              >
+                                <div className="flex items-center space-x-3">
+                                  <div
+                                    className={cn(
+                                      "w-8 h-8 rounded-full flex items-center justify-center",
+                                      detection.recognized_user
+                                        ? "bg-green-100 dark:bg-green-900"
+                                        : "bg-blue-100 dark:bg-blue-900",
+                                    )}
+                                  >
+                                    <User
+                                      className={cn(
+                                        "h-4 w-4",
+                                        detection.recognized_user
+                                          ? "text-green-600"
+                                          : "text-blue-600",
+                                      )}
+                                    />
                                   </div>
-                                  <div className="text-xs text-muted-foreground flex items-center space-x-2">
-                                    <span>{formatTimestamp(detection.timestamp)}</span>
-                                    {detection.user_id && (
-                                      <span className="text-xs bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300 px-2 py-0.5 rounded">
-                                        ID: {detection.user_id.slice(0, 8)}...
+                                  <div>
+                                    <div className="font-medium">
+                                      {detection.recognized_user?.first_name +
+                                        " " +
+                                        detection.recognized_user?.last_name ||
+                                        "Unknown Person"}
+                                    </div>
+                                    <div className="text-xs text-muted-foreground flex items-center space-x-2">
+                                      <span>
+                                        {formatTimestamp(detection.timestamp)}
                                       </span>
+                                      {detection.recognized_user?.id && (
+                                        <span className="text-xs bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300 px-2 py-0.5 rounded">
+                                          ID:{" "}
+                                          {detection.recognized_user?.id.slice(
+                                            0,
+                                            8,
+                                          )}
+                                          ...
+                                        </span>
+                                      )}
+                                    </div>
+                                  </div>
+                                </div>
+                                <div className="text-right">
+                                  <div
+                                    className={cn(
+                                      "text-sm font-medium",
+                                      getConfidenceColor(
+                                        detection.confidence_score,
+                                      ),
+                                    )}
+                                  >
+                                    {getConfidenceLabel(
+                                      detection.confidence_score,
                                     )}
                                   </div>
+                                  <div className="text-xs text-muted-foreground">
+                                    {(detection.confidence_score * 100).toFixed(
+                                      1,
+                                    )}
+                                    %
+                                  </div>
+                                  {/* Bounding box info */}
+                                  <div className="text-xs text-muted-foreground mt-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                    Box: {detection.face_bbox.width}×
+                                    {detection.face_bbox.height}
+                                  </div>
                                 </div>
                               </div>
-                              <div className="text-right">
-                                <div className={cn(
-                                  "text-sm font-medium",
-                                  getConfidenceColor(detection.confidence)
-                                )}>
-                                  {getConfidenceLabel(detection.confidence)}
-                                </div>
-                                <div className="text-xs text-muted-foreground">
-                                  {(detection.confidence * 100).toFixed(1)}%
-                                </div>
-                                {/* Bounding box info */}
-                                <div className="text-xs text-muted-foreground mt-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                                  Box: {detection.bbox.width}×{detection.bbox.height}
-                                </div>
-                              </div>
-                            </div>
-                          ))
+                            ),
+                          )
                         ) : (
                           <div className="text-center py-8 text-muted-foreground">
                             <Target className="h-8 w-8 mx-auto mb-2 opacity-50" />
                             <p className="text-sm">No detections yet</p>
-                            <p className="text-xs">Faces will appear here as they are detected</p>
+                            <p className="text-xs">
+                              Faces will appear here as they are detected
+                            </p>
                           </div>
                         )}
                       </div>
@@ -519,7 +524,8 @@ export function CameraStream() {
                     {/* Last Recognition Time */}
                     {faceDetections.last_recognition_time && (
                       <div className="text-xs text-muted-foreground text-center pt-2 border-t">
-                        Last recognition: {formatTimestamp(faceDetections.last_recognition_time)}
+                        Last recognition:{" "}
+                        {formatTimestamp(faceDetections.last_recognition_time)}
                       </div>
                     )}
 
@@ -529,7 +535,9 @@ export function CameraStream() {
                         <span>System Status:</span>
                         <div className="flex items-center space-x-2">
                           <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
-                          <span className="text-green-600 dark:text-green-400 font-medium">Healthy</span>
+                          <span className="text-green-600 dark:text-green-400 font-medium">
+                            Healthy
+                          </span>
                         </div>
                       </div>
                       <div className="flex items-center justify-between text-xs text-muted-foreground mt-1">
@@ -542,13 +550,17 @@ export function CameraStream() {
                   <div className="text-center py-8 text-muted-foreground">
                     <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500 mx-auto mb-2"></div>
                     <p className="text-sm">Loading detections...</p>
-                    <p className="text-xs">Initializing face detection system</p>
+                    <p className="text-xs">
+                      Initializing face detection system
+                    </p>
                   </div>
                 ) : (
                   <div className="text-center py-8 text-muted-foreground">
                     <Target className="h-8 w-8 mx-auto mb-2 opacity-50" />
                     <p className="text-sm">No detections yet</p>
-                    <p className="text-xs">Face detection data will appear here</p>
+                    <p className="text-xs">
+                      Face detection data will appear here
+                    </p>
                   </div>
                 )}
               </div>
@@ -571,7 +583,7 @@ export function CameraStream() {
                     "px-2 py-1 text-xs rounded-full font-medium",
                     camera.is_active
                       ? "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200"
-                      : "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200"
+                      : "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200",
                   )}
                 >
                   {camera.is_active ? "Active" : "Inactive"}
@@ -613,7 +625,7 @@ export function CameraStream() {
                         "px-2 py-1 text-xs rounded-full font-medium",
                         isStreamActive
                           ? "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200"
-                          : "bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200"
+                          : "bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200",
                       )}
                     >
                       {isStreamActive ? "Running" : "Stopped"}

@@ -1,33 +1,13 @@
-import {
-  userApi,
-  type User,
-  type UserCreate,
-  type UserUpdate,
-  type ProfileImageResponse,
-} from "@/lib/api/user";
-
-export interface UserFilters {
-  department?: string;
-  isActive?: boolean;
-  isVerified?: boolean;
-  search?: string;
-}
-
-export interface UserStats {
-  total: number;
-  active: number;
-  inactive: number;
-  verified: number;
-  unverified: number;
-  byDepartment: Record<string, number>;
-  byPosition: Record<string, number>;
-}
-
-export interface UserSearchResult {
-  users: User[];
-  total: number;
-  hasMore: boolean;
-}
+import type {
+  User,
+  UserCreate,
+  UserUpdate,
+  UserFilters,
+  UserStats,
+  UserSearchResult,
+  ProfileImageResponse,
+} from "@/types";
+import { userApi } from "@/lib/api/user";
 
 export class UserService {
   // Get all users with optional filtering
@@ -272,12 +252,13 @@ export class UserService {
 
       return await userApi.uploadProfileImage(userId, imageFile, imageName);
     } catch (error) {
-      console.error(`Failed to upload profile image for user ${userId}:`, error);
+      console.error(
+        `Failed to upload profile image for user ${userId}:`,
+        error
+      );
       throw error;
     }
   }
-
-
 
   // Get user profile images
   async getUserProfileImages(userId: string): Promise<{
@@ -298,7 +279,10 @@ export class UserService {
     try {
       await userApi.deleteProfileImage(userId, imageId);
     } catch (error) {
-      console.error(`Failed to delete profile image ${imageId} for user ${userId}:`, error);
+      console.error(
+        `Failed to delete profile image ${imageId} for user ${userId}:`,
+        error
+      );
       throw error;
     }
   }
@@ -311,7 +295,10 @@ export class UserService {
     try {
       return await userApi.setPrimaryProfileImage(userId, imageId);
     } catch (error) {
-      console.error(`Failed to set primary profile image ${imageId} for user ${userId}:`, error);
+      console.error(
+        `Failed to set primary profile image ${imageId} for user ${userId}:`,
+        error
+      );
       throw error;
     }
   }

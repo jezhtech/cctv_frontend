@@ -1,86 +1,13 @@
 import { ApiClient } from "./client";
 
-// Types
-export interface ProfileImageResponse {
-  id: string;
-  url: string;
-  is_primary: boolean;
-  uploaded_at: string;
-  size?: number;
-  content_type?: string;
-}
-
-export interface User {
-  id: string;
-  first_name: string;
-  last_name: string;
-  email: string;
-  phone?: string;
-  department?: string;
-  employee_id?: string;
-  position?: string;
-  avatar_url?: string;
-  profile_images?: Array<{
-    id: string;
-    filename: string;
-    is_primary: boolean;
-    uploaded_at: string;
-    size?: number;
-    content_type?: string;
-  }>;
-  is_active: boolean;
-  is_verified: boolean;
-  created_at: string;
-  updated_at: string;
-}
-
-export interface UserCreate {
-  first_name: string;
-  last_name: string;
-  email: string;
-  phone?: string;
-  department?: string;
-  employee_id?: string;
-  position?: string;
-  password: string;
-  profile_images?: Array<{
-    id: string;
-    filename: string;
-    is_primary: boolean;
-    uploaded_at: string;
-    size?: number;
-    content_type?: string;
-  }>;
-}
-
-export interface UserUpdate {
-  first_name?: string;
-  last_name?: string;
-  email?: string;
-  phone?: string;
-  department?: string;
-  employee_id?: string;
-  position?: string;
-  is_active?: boolean;
-  is_verified?: boolean;
-}
-
-export interface UserSearchParams {
-  skip?: number;
-  limit?: number;
-  search?: string;
-  department?: string;
-  is_active?: boolean;
-  is_verified?: boolean;
-}
-
-export interface PaginatedResponse<T> {
-  data: T[];
-  total: number;
-  page: number;
-  size: number;
-  pages: number;
-}
+import type {
+  User,
+  UserCreate,
+  UserUpdate,
+  UserSearchParams,
+  PaginatedResponse,
+  ProfileImageResponse,
+} from "@/types";
 
 export class UserApi extends ApiClient {
   // Get all users with pagination and search
@@ -159,10 +86,13 @@ export class UserApi extends ApiClient {
   }
 
   // Update user avatar
-  async updateUserAvatar(id: string, avatarFile: File): Promise<{ avatar_url: string }> {
+  async updateUserAvatar(
+    id: string,
+    avatarFile: File
+  ): Promise<{ avatar_url: string }> {
     const formData = new FormData();
     formData.append("avatar", avatarFile);
-    
+
     return this.request({
       method: "PUT",
       url: `/users/${id}/avatar`,
@@ -187,7 +117,7 @@ export class UserApi extends ApiClient {
     const formData = new FormData();
     formData.append("file", imageFile);
     formData.append("image_name", imageName);
-    
+
     return this.request({
       method: "POST",
       url: `/users/${userId}/profile-images`,
@@ -197,8 +127,6 @@ export class UserApi extends ApiClient {
       },
     });
   }
-
-
 
   // Get user profile images
   async getUserProfileImages(userId: string): Promise<{

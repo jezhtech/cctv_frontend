@@ -1,77 +1,12 @@
 import { ApiClient } from "./client";
-
-// Types
-export interface Camera {
-  id: string;
-  name: string;
-  ip_address: string;
-  port: number;
-  path?: string;
-  location: string;
-  is_active: boolean;
-  frame_rate: number;
-  username?: string;
-  password?: string;
-  created_at: string;
-  updated_at: string;
-}
-
-export interface CameraCreate {
-  name: string;
-  ip_address: string;
-  port: number;
-  path?: string;
-  location: string;
-  frame_rate: number;
-  username?: string;
-  password?: string;
-}
-
-export interface CameraUpdate {
-  name?: string;
-  ip_address?: string;
-  port?: number;
-  path?: string;
-  location?: string;
-  frame_rate?: number;
-  username?: string;
-  password?: string;
-  is_active?: boolean;
-  timeout?: number;
-}
-
-export interface StreamStatus {
-  is_running: boolean;
-  camera_id: string;
-  frame_count: number;
-  fps: number;
-  errors_count: number;
-  start_time?: string;
-  last_frame_time?: string;
-  uptime_seconds: number;
-  opencv_active: boolean;
-  task_alive: boolean;
-  camera_connected: boolean;
-  stream_health: string;
-  performance_metrics?: {
-    avg_frame_time_ms: number;
-    max_frame_time_ms: number;
-    min_frame_time_ms: number;
-    frame_time_history_count: number;
-  };
-  processor_type: string;
-  latest_frame_available?: boolean;
-  latest_frame_timestamp?: string;
-  frame_buffer_size?: number;
-}
-
-export interface PaginatedResponse<T> {
-  data: T[];
-  total: number;
-  page: number;
-  size: number;
-  pages: number;
-}
+import type {
+  Camera,
+  CameraCreate,
+  CameraUpdate,
+  FaceDetection,
+  PaginatedResponse,
+  StreamStatus,
+} from "@/types";
 
 export class CameraApi extends ApiClient {
   // Get all cameras with pagination
@@ -104,13 +39,21 @@ export class CameraApi extends ApiClient {
   }
 
   // Start camera stream
-  async startCameraStream(id: string): Promise<{ success: boolean; message: string; camera_id: string }> {
-    return this.post<{ success: boolean; message: string; camera_id: string }>(`/streams/${id}/start`);
+  async startCameraStream(
+    id: string
+  ): Promise<{ success: boolean; message: string; camera_id: string }> {
+    return this.post<{ success: boolean; message: string; camera_id: string }>(
+      `/streams/${id}/start`
+    );
   }
 
   // Stop camera stream
-  async stopCameraStream(id: string): Promise<{ success: boolean; message: string; camera_id: string }> {
-    return this.post<{ success: boolean; message: string; camera_id: string }>(`/streams/${id}/stop`);
+  async stopCameraStream(
+    id: string
+  ): Promise<{ success: boolean; message: string; camera_id: string }> {
+    return this.post<{ success: boolean; message: string; camera_id: string }>(
+      `/streams/${id}/stop`
+    );
   }
 
   // Get camera stream status
@@ -123,8 +66,16 @@ export class CameraApi extends ApiClient {
   }
 
   // Get all streams status
-  async getAllStreamsStatus(): Promise<{ total_streams: number; active_streams: number; streams: Record<string, StreamStatus> }> {
-    return this.get<{ total_streams: number; active_streams: number; streams: Record<string, StreamStatus> }>("/streams/status");
+  async getAllStreamsStatus(): Promise<{
+    total_streams: number;
+    active_streams: number;
+    streams: Record<string, StreamStatus>;
+  }> {
+    return this.get<{
+      total_streams: number;
+      active_streams: number;
+      streams: Record<string, StreamStatus>;
+    }>("/streams/status");
   }
 
   // Get camera by location
@@ -146,6 +97,10 @@ export class CameraApi extends ApiClient {
       "/cameras/bulk-update-status",
       { camera_ids: cameraIds, is_active: isActive }
     );
+  }
+
+  async getCameraDetections(id: string): Promise<FaceDetection[]> {
+    return this.get<FaceDetection[]>(`/cameras/${id}/detections`);
   }
 }
 

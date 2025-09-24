@@ -9,7 +9,8 @@ import {
 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { attendanceService } from "@/services";
-import type { Attendance } from "@/lib/api/attendance";
+import type { Attendance } from "@/types";
+import { getImageUrl } from "@/lib/utils";
 
 export function Attendance() {
   const [attendance, setAttendance] = useState<Attendance[]>([]);
@@ -114,10 +115,43 @@ export function Attendance() {
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="flex items-center">
                       <div className="w-8 h-8 bg-primary/10 rounded-full flex items-center justify-center">
-                        <span className="text-sm font-medium text-primary">
-                          {record.user?.first_name?.[0]}
-                          {record.user?.last_name?.[0]}
-                        </span>
+                        <div className="w-10 h-10 bg-primary/10 rounded-full flex items-center justify-center overflow-hidden">
+                          {record?.user?.profile_images &&
+                          record.user.profile_images.length > 0 ? (
+                            <img
+                              src={getImageUrl(
+                                record.user.profile_images.find(
+                                  (img) => img.is_primary,
+                                )?.filename ||
+                                  record.user.profile_images[0].filename,
+                                record.user.profile_images
+                                  .find((img) => img.is_primary)
+                                  ?.content_type?.split("/")[1] || "jpeg",
+                              )}
+                              alt={`${record.user.first_name} ${record.user.last_name}`}
+                              className="w-full h-full object-cover"
+                              onError={(e) => {
+                                // Fallback to initials if image fails to load
+                                const target = e.target as HTMLImageElement;
+                                target.style.display = "none";
+                                const parent = target.parentElement;
+                                if (parent) {
+                                  const fallback =
+                                    document.createElement("span");
+                                  fallback.className =
+                                    "text-sm font-medium text-primary";
+                                  fallback.textContent = `${record?.user?.first_name[0]}${record?.user?.last_name[0]}`;
+                                  parent.appendChild(fallback);
+                                }
+                              }}
+                            />
+                          ) : (
+                            <span className="text-sm font-medium text-primary">
+                              {record?.user?.first_name[0]}
+                              {record?.user?.last_name[0]}
+                            </span>
+                          )}
+                        </div>
                       </div>
                       <div className="ml-3">
                         <div className="text-sm font-medium">
@@ -161,7 +195,7 @@ export function Attendance() {
                           className="bg-primary h-2 rounded-full transition-all"
                           style={{
                             width: `${Math.round(
-                              record.confidence_score * 100
+                              record.confidence_score * 100,
                             )}%`,
                           }}
                         />

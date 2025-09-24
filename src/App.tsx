@@ -9,6 +9,7 @@ import { Attendance } from "@/pages/Attendance";
 import { Analytics } from "@/pages/Analytics";
 import { ActivityLog } from "@/pages/ActivityLog";
 import { Settings } from "@/pages/Settings";
+import { Toaster } from "@/components/ui/sonner";
 
 function App() {
   return (
@@ -27,6 +28,7 @@ function App() {
           </Route>
         </Routes>
       </Router>
+      <Toaster />
     </ThemeProvider>
   );
 }
